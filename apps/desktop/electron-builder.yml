@@ -1,0 +1,16 @@
+appId: com.curator.desktop
+productName: Curator Desktop
+files:
+  - dist/**
+  - dist-electron/**
+directories:
+  buildResources: build
+win:
+  target:
+    - nsis
+  artifactName: "${productName}-Setup-${version}.${ext}"
+  publisherName: Curator
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
