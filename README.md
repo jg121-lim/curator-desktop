@@ -2,6 +2,14 @@
 
 Electron(React) 데스크톱 앱과 FastAPI 백엔드를 함께 관리하는 모노레포입니다.
 
+## 운영 원칙
+
+- 이 리포지토리는 사람이 직접 코드를 수정하기보다 Agent가 협업하여 구현합니다.
+- 사람은 구현 상세 대신 결과물/변경 이력을 문서로 검토합니다.
+- 문서는 아래 두 가지로 분리 운영합니다.
+  - Agent 실행/인수인계용: `docs/agent-collaboration.md`
+  - 사람 검토용 릴리스 노트: `docs/human-release-notes.md`
+
 ## 디렉터리 구조
 
 - `apps/desktop`: Electron + React 클라이언트
