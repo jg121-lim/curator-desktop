@@ -1,0 +1,10 @@
+{
+  "name": "desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "echo \"Start Electron + React dev server here\"",
+    "build": "echo \"Build React app and package with electron-builder\""
+  }
+}
