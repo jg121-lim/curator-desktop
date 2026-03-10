@@ -1,75 +1,47 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { app } from 'electron';
-import type { AppSettings, StoredSettingsPayload } from '../types/settings';
+import { app, safeStorage } from 'electron';
+import type { AppSettings } from '../types/settings';
 import { DEFAULT_SETTINGS } from '../types/settings';
 
 const SETTINGS_FILE_NAME = 'settings.secure.json';
-const KEY_SALT = 'curator-desktop.settings.v1';
+
+interface StoredSettingsPayload {
+  encrypted: string;
+  encryption: 'safeStorage';
+}
 
 const getStorePath = () => path.join(app.getPath('userData'), SETTINGS_FILE_NAME);
 
-const deriveEncryptionKey = () => {
-  const machineFingerprint = [
-    process.env.USER ?? 'unknown-user',
-    process.env.HOSTNAME ?? 'unknown-host',
-    app.getName(),
-    app.getVersion(),
-  ].join(':');
+const serialize = (settings: AppSettings) => JSON.stringify(settings);
 
-  return crypto.scryptSync(machineFingerprint, KEY_SALT, 32);
-};
+const deserialize = (value: string): AppSettings => ({
+  ...DEFAULT_SETTINGS,
+  ...(JSON.parse(value) as Partial<AppSettings>),
+});
 
 const encryptSettings = (settings: AppSettings): StoredSettingsPayload => {
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv('aes-256-gcm', deriveEncryptionKey(), iv);
-  const plaintext = JSON.stringify(settings);
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('OS-level encryption is not available in this environment.');
+  }
 
-  const encrypted = Buffer.concat([
-    cipher.update(plaintext, 'utf8'),
-    cipher.final(),
-  ]);
-
+  const encrypted = safeStorage.encryptString(serialize(settings));
   return {
+    encryption: 'safeStorage',
     encrypted: encrypted.toString('base64'),
-    iv: iv.toString('base64'),
-    authTag: cipher.getAuthTag().toString('base64'),
   };
 };
 
 const decryptSettings = (payload: StoredSettingsPayload): AppSettings => {
-  const decipher = crypto.createDecipheriv(
-    'aes-256-gcm',
-    deriveEncryptionKey(),
-    Buffer.from(payload.iv, 'base64'),
-  );
-
-  decipher.setAuthTag(Buffer.from(payload.authTag, 'base64'));
-
-  const decrypted = Buffer.concat([
-    decipher.update(Buffer.from(payload.encrypted, 'base64')),
-    decipher.final(),
-  ]);
-
-  return {
-    ...DEFAULT_SETTINGS,
-    ...(JSON.parse(decrypted.toString('utf8')) as Partial<AppSettings>),
-  };
+  const encryptedBuffer = Buffer.from(payload.encrypted, 'base64');
+  const decrypted = safeStorage.decryptString(encryptedBuffer);
+  return deserialize(decrypted);
 };
 
 const maskApiKey = (apiKey: string) => {
-  if (!apiKey) {
-    return '';
-  }
-
-  if (apiKey.length <= 4) {
-    return '*'.repeat(apiKey.length);
-  }
-
-  const visiblePrefix = apiKey.slice(0, 2);
-  const visibleSuffix = apiKey.slice(-2);
-  return `${visiblePrefix}${'*'.repeat(apiKey.length - 4)}${visibleSuffix}`;
+  if (!apiKey) return '';
+  if (apiKey.length <= 4) return '*'.repeat(apiKey.length);
+  return `${apiKey.slice(0, 2)}${'*'.repeat(apiKey.length - 4)}${apiKey.slice(-2)}`;
 };
 
 export const settingsStore = {

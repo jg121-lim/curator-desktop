@@ -13,9 +13,3 @@ export const DEFAULT_SETTINGS: AppSettings = {
   confluenceSpaceKey: '',
   syncIntervalMinutes: 30,
 };
-
-export interface StoredSettingsPayload {
-  encrypted: string;
-  iv: string;
-  authTag: string;
-}
