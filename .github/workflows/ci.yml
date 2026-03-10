@@ -1,0 +1,48 @@
+name: curator-desktop-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  backend-tests:
+    name: Backend unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      - name: Run backend tests
+        run: pytest apps/backend/tests -q
+
+  test-artifact-check:
+    name: Verify test/docs artifacts exist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify frontend test files and e2e smoke spec
+        run: |
+          test -f apps/desktop/src/__tests__/chat-rendering.test.tsx
+          test -f apps/desktop/src/__tests__/settings-persistence.test.ts
+          test -f apps/desktop/src/__tests__/connection-failure-ui.test.tsx
+          test -f apps/desktop/e2e/smoke.spec.ts
+
+      - name: Verify docs
+        run: |
+          test -f docs/architecture.md
+          test -f docs/operations.md
