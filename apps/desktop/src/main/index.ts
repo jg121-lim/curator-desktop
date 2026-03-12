@@ -19,6 +19,13 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show();
+    if (is.dev) {
+      mainWindow.webContents.openDevTools();
+    }
+  });
+
+  mainWindow.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+    console.log(`[renderer][${level}] ${message} (${sourceId}:${line})`);
   });
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

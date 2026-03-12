@@ -10,6 +10,7 @@ export default defineConfig({
       alias: {
         '@renderer': resolve('src/renderer/src'),
       },
+      dedupe: ['react', 'react-dom', 'react-router-dom'],
     },
     plugins: [react()],
   },
